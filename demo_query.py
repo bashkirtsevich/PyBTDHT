@@ -17,6 +17,9 @@ def bootstrapDone(found, server, key):
     if len(found) == 0:
         print "Could not connect to the bootstrap server."
         reactor.stop()
+    else:
+        print "Bootstrap completed"
+        
     server.get(key).addCallback(done)
 
 
