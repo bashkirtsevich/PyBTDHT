@@ -163,7 +163,7 @@ class RPCFindResponse(object):
         return self.response[0]
 
     def hasValue(self):
-        return isinstance(self.response[1], dict)
+        return isinstance(self.response[1], dict) and "values" in self.response[1]
 
     def getValue(self):
         return self.response[1]["values"]
