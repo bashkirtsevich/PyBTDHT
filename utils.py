@@ -15,6 +15,31 @@ def digest(s):
     return hashlib.sha1(s).digest()
 
 
+def from_hex_to_byte(hex_string):
+    byte_string = ""
+
+    transfer = "0123456789abcdef"
+    untransfer = {}
+    for i in range(16):
+        untransfer[transfer[i]] = i
+
+    for i in range(0, len(hex_string), 2):
+        byte_string += chr((untransfer[hex_string[i]] << 4) + untransfer[hex_string[i + 1]])
+
+    return byte_string
+
+
+def from_byte_to_hex(byte_string):
+    transfer = "0123456789abcdef"
+
+    hex_string = ""
+    for s in byte_string:
+        hex_string += transfer[(ord(s) >> 4) & 15]
+        hex_string += transfer[ord(s) & 15]
+
+    return hex_string
+
+
 def decodeNodes(message):
     nodes = []
     if len(message) % 26 != 0:
@@ -32,6 +57,19 @@ def decodeNodes(message):
         nodes.append([node_id, ip, port])
 
     return nodes
+
+
+def encode_nodes(nodes):
+    message = ""
+    for node in nodes:
+        try:
+            ip_message = socket.inet_aton(node[1][0])
+            port_message = struct.pack("!H", node[1][1])
+        except:
+            continue  # from IP address to network order
+        message = message + node[0] + ip_message + port_message
+
+    return message
 
 
 def encodeNodes(nodes):

@@ -1,22 +1,8 @@
 from twisted.internet import reactor
 from twisted.python import log
 from network import Server
+from utils import from_hex_to_byte
 import sys
-
-
-def from_hex_to_byte(hex_string):
-    byte_string = ""
-
-    transfer = "0123456789abcdef"
-    untransfer = {}
-    for i in range(16):
-        untransfer[transfer[i]] = i
-
-    for i in range(0, len(hex_string), 2):
-        byte_string += chr((untransfer[hex_string[i]] << 4) + untransfer[hex_string[i + 1]])
-
-    return byte_string
-
 
 log.startLogging(sys.stdout)
 
