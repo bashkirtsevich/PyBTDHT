@@ -10,7 +10,7 @@ from twisted.internet import defer, reactor, task
 
 from log import Logger
 from protocol import KademliaProtocol
-from utils import deferredDict, digest
+from utils import deferredDict, digest, generate_node_id
 from storage import ForgetfulStorage
 from node import Node
 from crawling import ValueSpiderCrawl
@@ -37,7 +37,7 @@ class Server(object):
         self.alpha = alpha
         self.log = Logger(system=self)
         self.storage = storage or ForgetfulStorage()
-        self.node = Node(id or digest(random.getrandbits(255)))
+        self.node = Node(id or generate_node_id())
         self.protocol = KademliaProtocol(self.node, self.storage, ksize)
         self.refreshLoop = LoopingCall(self.refreshTable).start(3600)
 
@@ -85,7 +85,7 @@ class Server(object):
         back up, the list of nodes can be used to bootstrap.
         """
         neighbors = self.protocol.router.findNeighbors(self.node)
-        return [ tuple(n)[-2:] for n in neighbors ]
+        return [tuple(n)[-2:] for n in neighbors]
 
     def bootstrap(self, addrs):
         """
@@ -119,8 +119,9 @@ class Server(object):
         Returns:
             A `list` of IP's.  If no one can be contacted, then the `list` will be empty.
         """
+
         def handle(results):
-            ips = [ result[1][0] for result in results if result[0] ]
+            ips = [result[1][0] for result in results if result[0]]
             self.log.debug("other nodes think our ip is %s" % str(ips))
             return ips
 
@@ -195,10 +196,10 @@ class Server(object):
         Save the state of this node (the alpha/ksize/id/immediate neighbors)
         to a cache file with the given fname.
         """
-        data = { 'ksize': self.ksize,
-                 'alpha': self.alpha,
-                 'id': self.node.id,
-                 'neighbors': self.bootstrappableNeighbors() }
+        data = {'ksize': self.ksize,
+                'alpha': self.alpha,
+                'id': self.node.id,
+                'neighbors': self.bootstrappableNeighbors()}
         if len(data['neighbors']) == 0:
             self.log.warning("No known neighbors, so not writing to cache.")
             return

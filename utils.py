@@ -7,12 +7,17 @@ import socket
 import struct
 
 from twisted.internet import defer
+from uuid import uuid4
 
 
 def digest(s):
     if not isinstance(s, str):
         s = str(s)
     return hashlib.sha1(s).digest()
+
+
+def generate_node_id():
+    return digest(uuid4().bytes)
 
 
 def from_hex_to_byte(hex_string):
