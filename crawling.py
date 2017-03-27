@@ -1,8 +1,8 @@
 from collections import Counter
 
-from kademlia.log import Logger
-from kademlia.utils import deferredDict
-from kademlia.node import Node, NodeHeap
+from log import Logger
+from utils import deferredDict, decodeNodes
+from node import Node, NodeHeap
 
 
 class SpiderCrawl(object):
@@ -72,7 +72,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         Find either the closest nodes or the value requested.
         """
-        return self._find(self.protocol.callFindValue)
+        return self._find(self.protocol.callGetPeers)
 
     def _nodesFound(self, responses):
         """
@@ -114,7 +114,7 @@ class ValueSpiderCrawl(SpiderCrawl):
 
         peerToSaveTo = self.nearestWithoutValue.popleft()
         if peerToSaveTo is not None:
-            d = self.protocol.callStore(peerToSaveTo, self.node.id, value)
+            d = self.protocol.callAnnouncePeer(peerToSaveTo, self.node.id, value)
             return d.addCallback(lambda _: value)
         return value
 
@@ -173,5 +173,5 @@ class RPCFindResponse(object):
         Get the node list in the response.  If there's no value, this should
         be set.
         """
-        nodelist = self.response[1] or []
+        nodelist = decodeNodes(self.response[1]["nodes"]) or []
         return [Node(*nodeple) for nodeple in nodelist]
