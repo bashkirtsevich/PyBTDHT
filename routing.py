@@ -77,38 +77,6 @@ class KBucket(object):
         return len(self.nodes)
 
 
-class TableTraverser(object):
-    def __init__(self, table, startNode):
-        index = table.getBucketFor(startNode)
-        table.buckets[index].touchLastUpdated()
-        self.currentNodes = table.buckets[index].getNodes()
-        self.leftBuckets = table.buckets[:index]
-        self.rightBuckets = table.buckets[(index + 1):]
-        self.left = True
-
-    def __iter__(self):
-        return self
-
-    def next(self):
-        """
-        Pop an item from the left subtree, then right, then left, etc.
-        """
-        if len(self.currentNodes) > 0:
-            return self.currentNodes.pop()
-
-        if self.left and len(self.leftBuckets) > 0:
-            self.currentNodes = self.leftBuckets.pop().getNodes()
-            self.left = False
-            return self.next()
-
-        if len(self.rightBuckets) > 0:
-            self.currentNodes = self.rightBuckets.pop().getNodes()
-            self.left = True
-            return self.next()
-
-        raise StopIteration
-
-
 class RoutingTable(object):
     def __init__(self, protocol, ksize, node):
         """
@@ -169,12 +137,11 @@ class RoutingTable(object):
                 return index
 
     def findNeighbors(self, node, k=None, exclude=None):
-        k = k or self.ksize
         nodes = []
-        for neighbor in TableTraverser(self, node):
-            if neighbor.id != node.id and (exclude is None or not neighbor.sameHomeAs(exclude)):
-                heapq.heappush(nodes, (node.distanceTo(neighbor), neighbor))
-            if len(nodes) == k:
-                break
+        # Linear scan by buckets and nodes. Find any closest neighbor (including far nodes).
+        for bucket in self.buckets:
+            for neighbor in bucket.getNodes():
+                if neighbor.id != node.id and (exclude is None or not neighbor.sameHomeAs(exclude)):
+                    heapq.heappush(nodes, (node.distanceTo(neighbor), neighbor))
 
-        return map(operator.itemgetter(1), heapq.nsmallest(k, nodes))
+        return map(operator.itemgetter(1), heapq.nsmallest(k or self.ksize, nodes))
