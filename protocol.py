@@ -101,7 +101,7 @@ class KademliaProtocol(RPCProtocol):
 
     def callGetPeers(self, nodeToAsk, key):
         address = (nodeToAsk.ip, nodeToAsk.port)
-        d = self.get_peers(address, self.sourceNode.id, key)
+        d = self.get_peers(address, self.sourceNode.id, key.id)
         return d.addCallback(self.handleCallResponse, nodeToAsk, responseMessage="get_peers")
 
     def callPing(self, nodeToAsk):
