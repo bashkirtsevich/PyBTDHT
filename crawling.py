@@ -166,7 +166,7 @@ class RPCFindResponse(object):
         return isinstance(self.response[1], dict)
 
     def getValue(self):
-        return self.response[1]['value']
+        return self.response[1]["values"]
 
     def getNodeList(self):
         """
