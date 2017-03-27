@@ -9,6 +9,7 @@ class SpiderCrawl(object):
     """
     Crawl the network and look for given 160-bit keys.
     """
+
     def __init__(self, protocol, node, peers, ksize, alpha):
         """
         Create a new C{SpiderCrawl}er.
@@ -29,7 +30,6 @@ class SpiderCrawl(object):
         self.log = Logger(system=self)
         self.log.info("creating spider with peers: %s" % peers)
         self.nearest.push(peers)
-
 
     def _find(self, rpcmethod):
         """
@@ -84,8 +84,8 @@ class ValueSpiderCrawl(SpiderCrawl):
             response = RPCFindResponse(response)
             if not response.happened():
                 toremove.append(peerid)
-            elif response.hasValue():
-                foundValues.append(response.getValue())
+            elif response.hasValues():
+                foundValues.append(response.getValues())
             else:
                 peer = self.nearest.getNodeById(peerid)
                 self.nearestWithoutValue.push(peer)
@@ -162,10 +162,11 @@ class RPCFindResponse(object):
         """
         return self.response[0]
 
-    def hasValue(self):
-        return isinstance(self.response[1], dict) and "values" in self.response[1]
+    def hasValues(self):
+        return isinstance(self.response[1], dict) and "values" in self.response[1] and len(
+            self.response[1]["values"]) > 0
 
-    def getValue(self):
+    def getValues(self):
         return self.response[1]["values"]
 
     def getNodeList(self):
