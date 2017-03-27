@@ -10,7 +10,7 @@ from twisted.internet import defer, reactor, task
 
 from log import Logger
 from protocol import KademliaProtocol
-from utils import deferredDict, digest, generate_node_id
+from utils import deferredDict, generate_node_id
 from storage import ForgetfulStorage
 from node import Node
 from crawling import ValueSpiderCrawl
@@ -137,11 +137,10 @@ class Server(object):
         Returns:
             :class:`None` if not found, the value otherwise.
         """
-        dkey = digest(key)
         # if this node has it, return it
-        if self.storage.get(dkey) is not None:
-            return defer.succeed(self.storage.get(dkey))
-        node = Node(dkey)
+        if self.storage.get(key) is not None:
+            return defer.succeed(self.storage.get(key))
+        node = Node(key)
         nearest = self.protocol.router.findNeighbors(node)
         if len(nearest) == 0:
             self.log.warning("There are no known neighbors to get key %s" % key)
@@ -154,8 +153,7 @@ class Server(object):
         Set the given key to the given value in the network.
         """
         self.log.debug("setting '%s' = '%s' on network" % (key, value))
-        dkey = digest(key)
-        return self.digest_set(dkey, value)
+        return self.digest_set(key, value)
 
     def digest_set(self, dkey, value):
         """

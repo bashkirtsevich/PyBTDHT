@@ -9,7 +9,6 @@ from rpcudp.protocol import RPCProtocol
 from node import Node
 from routing import RoutingTable
 from log import Logger
-from utils import digest
 
 from struct import pack
 
@@ -144,7 +143,7 @@ class KademliaProtocol(RPCProtocol):
         if self.router.isNewNode(node):
             ds = []
             for key, value in self.storage.iteritems():
-                keynode = Node(digest(key))
+                keynode = Node(key)
                 neighbors = self.router.findNeighbors(keynode)
                 if len(neighbors) > 0:
                     newNodeClose = node.distanceTo(keynode) < neighbors[-1].distanceTo(keynode)
