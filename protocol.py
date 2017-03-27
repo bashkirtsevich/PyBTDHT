@@ -12,7 +12,7 @@ from log import Logger
 
 from struct import pack
 
-from bencode import bencode, bdecode
+from bencode import bencode, bdecode, BTFailure
 
 
 class KademliaProtocol(RPCProtocol):
@@ -28,18 +28,21 @@ class KademliaProtocol(RPCProtocol):
         if self.noisy:
             log.msg("received datagram from %s" % repr(address))
 
-        msg = bdecode(datagram)
-        msgID = msg["t"]
-        msgType = msg["y"]
+        try:
+            msg = bdecode(datagram)
+            msgID = msg["t"]
+            msgType = msg["y"]
 
-        if msgType == "q":
-            self._acceptRequest(msgID, [msg["q"], msg["a"]], address)
-        elif msgType == "r":
-            self._acceptResponse(msgID, msg["r"], address)
-        else:
-            # otherwise, don't know the format, don't do anything
-            # TODO: we must reply error message
-            log.msg("Received unknown message from %s, ignoring" % repr(address))
+            if msgType == "q":
+                self._acceptRequest(msgID, [msg["q"], msg["a"]], address)
+            elif msgType == "r":
+                self._acceptResponse(msgID, msg["r"], address)
+            else:
+                # otherwise, don't know the format, don't do anything
+                # TODO: we must reply error message
+                log.msg("Received unknown message from %s, ignoring" % repr(address))
+        except BTFailure:
+            log.msg("Not a valid bencoded string from %s, ignoring" % repr(address))
 
     def sendMessage(self, address, message):
         msgID = pack(">I", self.transactionSeq)
