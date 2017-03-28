@@ -1,7 +1,7 @@
 from collections import Counter
 
 from log import Logger
-from utils import deferred_dict, decode_nodes
+from utils import deferred_dict, decode_nodes, decode_values
 from node import Node, NodeHeap
 
 
@@ -87,7 +87,7 @@ class ValueSpiderCrawl(SpiderCrawl):
             if not response.happened():
                 toremove.append(peerid)
             elif response.hasValues():
-                foundValues.append(response.getValues())
+                foundValues.extend(response.getValues())
             else:
                 peer = self.nearest.getNodeById(peerid)
                 self.nearestWithoutValue.push(peer)
@@ -151,7 +151,7 @@ class RPCFindResponse(object):
             self.response[1]["values"]) > 0
 
     def getValues(self):
-        return self.response[1]["values"]
+        return decode_values(self.response[1]["values"])
 
     def getToken(self):
         return self.response[1]["token"]
