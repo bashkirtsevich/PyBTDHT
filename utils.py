@@ -68,11 +68,11 @@ def encode_nodes(nodes):
     message = ""
     for node in nodes:
         try:
-            ip_message = socket.inet_aton(node[1][0])
-            port_message = struct.pack("!H", node[1][1])
+            ip_message = socket.inet_aton(node.ip)
+            port_message = struct.pack("!H", node.port)
         except:
             continue  # from IP address to network order
-        message = message + node[0] + ip_message + port_message
+        message = message + node.id + ip_message + port_message
 
     return message
 
