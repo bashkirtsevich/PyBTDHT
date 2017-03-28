@@ -10,14 +10,28 @@ from twisted.internet import defer
 from uuid import uuid4
 
 
-def digest(s):
-    if not isinstance(s, str):
-        s = str(s)
-    return hashlib.sha1(s).digest()
+class OrderedSet(list):
+    """
+    Acts like a list in all ways, except in the behavior of the :meth:`push` method.
+    """
+
+    def push(self, thing):
+        """
+        1. If the item exists in the list, it's removed
+        2. The item is pushed to the end of the list
+        """
+        if thing in self:
+            self.remove(thing)
+        self.append(thing)
 
 
 def generate_node_id():
-    return digest(uuid4().bytes)
+    def sha1(s):
+        if not isinstance(s, str):
+            s = str(s)
+        return hashlib.sha1(s).digest()
+
+    return sha1(uuid4().bytes)
 
 
 def from_hex_to_byte(hex_string):
@@ -45,7 +59,7 @@ def from_byte_to_hex(byte_string):
     return hex_string
 
 
-def decodeNodes(message):
+def decode_nodes(message):
     nodes = []
     if len(message) % 26 != 0:
         return nodes
@@ -77,7 +91,7 @@ def encode_nodes(nodes):
     return message
 
 
-def deferredDict(d):
+def deferred_dict(d):
     """
     Just like a :class:`defer.DeferredList` but instead accepts and returns a :class:`dict`.
 
@@ -102,22 +116,7 @@ def deferredDict(d):
     return dl.addCallback(handle, d.keys())
 
 
-class OrderedSet(list):
-    """
-    Acts like a list in all ways, except in the behavior of the :meth:`push` method.
-    """
-
-    def push(self, thing):
-        """
-        1. If the item exists in the list, it's removed
-        2. The item is pushed to the end of the list
-        """
-        if thing in self:
-            self.remove(thing)
-        self.append(thing)
-
-
-def sharedPrefix(args):
+def shared_prefix(args):
     """
     Find the shared prefix between the strings.
 

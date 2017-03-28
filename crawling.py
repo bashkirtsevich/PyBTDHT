@@ -1,7 +1,7 @@
 from collections import Counter
 
 from log import Logger
-from utils import deferredDict, decodeNodes
+from utils import deferred_dict, decode_nodes
 from node import Node, NodeHeap
 
 
@@ -58,7 +58,7 @@ class SpiderCrawl(object):
         for peer in self.nearest.getUncontacted()[:count]:
             ds[peer.id] = rpcmethod(peer, self.node)
             self.nearest.markContacted(peer)
-        return deferredDict(ds).addCallback(self._nodesFound)
+        return deferred_dict(ds).addCallback(self._nodesFound)
 
 
 class ValueSpiderCrawl(SpiderCrawl):
@@ -161,5 +161,5 @@ class RPCFindResponse(object):
         Get the node list in the response.  If there's no value, this should
         be set.
         """
-        nodelist = decodeNodes(self.response[1]["nodes"]) or []
+        nodelist = decode_nodes(self.response[1]["nodes"]) or []
         return [Node(*nodeple) for nodeple in nodelist]

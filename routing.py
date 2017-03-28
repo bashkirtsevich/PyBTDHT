@@ -3,7 +3,7 @@ import time
 import operator
 from collections import OrderedDict
 
-from utils import OrderedSet, sharedPrefix
+from utils import OrderedSet, shared_prefix
 
 
 class KBucket(object):
@@ -64,7 +64,7 @@ class KBucket(object):
         return True
 
     def depth(self):
-        sp = sharedPrefix([n.id for n in self.nodes.values()])
+        sp = shared_prefix([n.id for n in self.nodes.values()])
         return len(sp)
 
     def head(self):

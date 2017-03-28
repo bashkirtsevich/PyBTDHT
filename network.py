@@ -10,7 +10,7 @@ from twisted.internet import defer, reactor, task
 
 from log import Logger
 from protocol import KademliaProtocol
-from utils import deferredDict, generate_node_id
+from utils import deferred_dict, generate_node_id
 from storage import ForgetfulStorage
 from node import Node
 from crawling import ValueSpiderCrawl
@@ -110,7 +110,7 @@ class Server(object):
         ds = {}
         for addr in addrs:
             ds[addr] = self.protocol.ping(addr, self.node.id)
-        return deferredDict(ds).addCallback(initTable)
+        return deferred_dict(ds).addCallback(initTable)
 
     def inetVisibleIP(self):
         """
