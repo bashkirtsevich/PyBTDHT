@@ -86,13 +86,13 @@ class KademliaProtocol(RPCProtocol):
         node = Node(key)
         return map(tuple, self.router.findNeighbors(node, exclude=source))
 
-    def rpc_find_value(self, sender, nodeId, key):
+    def rpc_get_peers(self, sender, nodeId, key):
         source = Node(nodeId, sender[0], sender[1])
         self.welcomeIfNewNode(source)
-        value = self.storage.get(key, None)
-        if value is None:
+        values = self.storage.get(key, None)
+        if values is None:
             return self.rpc_find_node(sender, nodeId, key)
-        return {'value': value}
+        return {"values": values}
 
     def callFindNode(self, nodeToAsk, nodeToFind):
         address = (nodeToAsk.ip, nodeToAsk.port)
