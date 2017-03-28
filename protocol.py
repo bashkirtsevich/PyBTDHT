@@ -1,5 +1,7 @@
 import random
 
+from base64 import b64encode
+
 from twisted.internet import defer
 from twisted.internet import reactor
 from twisted.python import log
@@ -13,6 +15,8 @@ from log import Logger
 from struct import pack
 
 from bencode import bencode, bdecode, BTFailure
+
+from utils import encode_nodes
 
 
 class KademliaProtocol(RPCProtocol):
@@ -44,6 +48,14 @@ class KademliaProtocol(RPCProtocol):
         except BTFailure:
             log.msg("Not a valid bencoded string from %s, ignoring" % repr(address))
 
+    def _sendResponse(self, response, msgID, address):
+        if self.noisy:
+            log.msg("sending response for msg id %s to %s" % (b64encode(msgID), repr(address)))
+
+        response["t"] = msgID
+
+        self.transport.write(bencode(response), address)
+
     def sendMessage(self, address, message):
         msgID = pack(">I", self.transactionSeq)
         self.transactionSeq += 1
@@ -69,30 +81,44 @@ class KademliaProtocol(RPCProtocol):
 
     def rpc_ping(self, sender, nodeId):
         source = Node(nodeId, sender[0], sender[1])
+
         self.welcomeIfNewNode(source)
-        return self.sourceNode.id
+
+        return {"y": "r", "r": {"id": self.sourceNode.id}}
 
     def rpc_announce_peer(self, sender, nodeId, key, value):
         source = Node(nodeId, sender[0], sender[1])
+
         self.welcomeIfNewNode(source)
+
         self.log.debug("got a store request from %s, storing value" % str(sender))
+
         self.storage[key] = value
-        return True
+
+        return {"y": "r", "r": {"id": self.sourceNode.id}}
 
     def rpc_find_node(self, sender, nodeId, key):
         self.log.info("finding neighbors of %i in local table" % long(nodeId.encode('hex'), 16))
+
         source = Node(nodeId, sender[0], sender[1])
         self.welcomeIfNewNode(source)
+
         node = Node(key)
-        return map(tuple, self.router.findNeighbors(node, exclude=source))
+
+        return {"y": "r", "r": {"id": self.sourceNode.id,
+                                "nodes": encode_nodes(self.router.findNeighbors(node, exclude=source))}}
 
     def rpc_get_peers(self, sender, nodeId, key):
         source = Node(nodeId, sender[0], sender[1])
+
         self.welcomeIfNewNode(source)
+
         values = self.storage.get(key, None)
-        if values is None:
+        if values is not None:
+            # We must calculate unique token for sender
+            return {"y": "r", "r": {"id": self.sourceNode.id, "token": "token", "values": values}}
+        else:
             return self.rpc_find_node(sender, nodeId, key)
-        return {"values": values}
 
     def callFindNode(self, nodeToAsk, nodeToFind):
         address = (nodeToAsk.ip, nodeToAsk.port)
