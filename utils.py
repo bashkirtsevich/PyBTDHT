@@ -77,19 +77,6 @@ def encode_nodes(nodes):
     return message
 
 
-def encodeNodes(nodes):
-    message = ""
-    for node in nodes:
-        try:
-            ip_message = socket.inet_aton(node[1][0])
-            port_message = struct.pack("!H", node[1][1])
-        except:
-            continue  # from IP address to network order
-        message = message + node[0] + ip_message + port_message
-
-    return message
-
-
 def deferredDict(d):
     """
     Just like a :class:`defer.DeferredList` but instead accepts and returns a :class:`dict`.
