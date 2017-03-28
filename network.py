@@ -39,7 +39,7 @@ class Server(object):
         self.storage = storage or ForgetfulStorage()
         self.node = Node(id or generate_node_id())
         self.protocol = KademliaProtocol(self.node, self.storage, ksize)
-        self.refreshLoop = LoopingCall(self.refreshTable).start(3600)
+        self.refreshLoop = LoopingCall(self.refresh_table).start(3600)
 
     def listen(self, port, interface=""):
         """
@@ -53,7 +53,7 @@ class Server(object):
         """
         return reactor.listenUDP(port, self.protocol, interface)
 
-    def refreshTable(self):
+    def refresh_table(self):
         """
         Refresh buckets that haven't had any lookups in the last hour
         (per section 2.3 of the paper).
@@ -74,7 +74,7 @@ class Server(object):
 
         return defer.gatherResults(ds).addCallback(republishKeys)
 
-    def bootstrappableNeighbors(self):
+    def bootstrappable_neighbors(self):
         """
         Get a :class:`list` of (ip, port) :class:`tuple` pairs suitable for use as an argument
         to the bootstrap method.
@@ -99,7 +99,7 @@ class Server(object):
         if self.protocol.transport is None:
             return task.deferLater(reactor, 1, self.bootstrap, addrs)
 
-        def initTable(results):
+        def init_table(results):
             nodes = []
             for addr, result in results.items():
                 if result[0]:
@@ -110,9 +110,9 @@ class Server(object):
         ds = {}
         for addr in addrs:
             ds[addr] = self.protocol.ping(addr, self.node.id)
-        return deferred_dict(ds).addCallback(initTable)
+        return deferred_dict(ds).addCallback(init_table)
 
-    def inetVisibleIP(self):
+    def inet_visible_ip(self):
         """
         Get the internet visible IP's of this node as other nodes see it.
 
@@ -126,7 +126,7 @@ class Server(object):
             return ips
 
         ds = []
-        for neighbor in self.bootstrappableNeighbors():
+        for neighbor in self.bootstrappable_neighbors():
             ds.append(self.protocol.stun(neighbor))
         return defer.gatherResults(ds).addCallback(handle)
 
@@ -164,7 +164,7 @@ class Server(object):
             if self.node.distanceTo(node) < max([n.distanceTo(node) for n in nodes]):
                 self.storage[key] = value
             ds = [self.protocol.callAnnouncePeer(n, key, value) for n in nodes]
-            return defer.DeferredList(ds).addCallback(self._anyRespondSuccess)
+            return defer.DeferredList(ds).addCallback(self._any_respond_success)
 
         nearest = self.protocol.router.findNeighbors(node)
         if len(nearest) == 0:
@@ -173,18 +173,19 @@ class Server(object):
         spider = NodeSpiderCrawl(self.protocol, node, nearest, self.ksize, self.alpha)
         return spider.find().addCallback(store)
 
-    def _anyRespondSuccess(self, responses):
+    def _any_respond_success(self, responses):
         """
         Given the result of a DeferredList of calls to peers, ensure that at least
         one of them was contacted and responded with a Truthy result.
         """
-        for deferSuccess, result in responses:
-            peerReached, peerResponse = result
-            if deferSuccess and peerReached and peerResponse:
+        for defer_success, result in responses:
+            peer_reached, peer_response = result
+            if defer_success and peer_reached and peer_response:
                 return True
+
         return False
 
-    def saveState(self, fname):
+    def save_state(self, fname):
         """
         Save the state of this node (the alpha/ksize/id/immediate neighbors)
         to a cache file with the given fname.
@@ -192,7 +193,7 @@ class Server(object):
         data = {'ksize': self.ksize,
                 'alpha': self.alpha,
                 'id': self.node.id,
-                'neighbors': self.bootstrappableNeighbors()}
+                'neighbors': self.bootstrappable_neighbors()}
         if len(data['neighbors']) == 0:
             self.log.warning("No known neighbors, so not writing to cache.")
             return
@@ -200,7 +201,7 @@ class Server(object):
             pickle.dump(data, f)
 
     @classmethod
-    def loadState(self, fname):
+    def load_state(cls, fname):
         """
         Load the state of this node (the alpha/ksize/id/immediate neighbors)
         from a cache file with the given fname.
@@ -212,16 +213,16 @@ class Server(object):
             s.bootstrap(data['neighbors'])
         return s
 
-    def saveStateRegularly(self, fname, frequency=600):
+    def save_state_regularly(self, fname, frequency=600):
         """
         Save the state of node with a given regularity to the given
         filename.
 
         Args:
             fname: File name to save retularly to
-            frequencey: Frequency in seconds that the state should be saved.
+            frequency: Frequency in seconds that the state should be saved.
                         By default, 10 minutes.
         """
-        loop = LoopingCall(self.saveState, fname)
+        loop = LoopingCall(self.save_state, fname)
         loop.start(frequency)
         return loop
