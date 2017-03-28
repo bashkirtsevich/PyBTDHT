@@ -80,8 +80,10 @@ class ValueSpiderCrawl(SpiderCrawl):
         """
         toremove = []
         foundValues = []
+
         for peerid, response in responses.items():
             response = RPCFindResponse(response)
+
             if not response.happened():
                 toremove.append(peerid)
             elif response.hasValues():
@@ -90,33 +92,15 @@ class ValueSpiderCrawl(SpiderCrawl):
                 peer = self.nearest.getNodeById(peerid)
                 self.nearestWithoutValue.push(peer)
                 self.nearest.push(response.getNodeList())
+
         self.nearest.remove(toremove)
 
         if len(foundValues) > 0:
-            return self._handleFoundValues(foundValues)
-        if self.nearest.allBeenContacted():
-            # not found!
-            return None
-        return self.find()
-
-    def _handleFoundValues(self, values):
-        """
-        We got some values!  Exciting.  But let's make sure
-        they're all the same or freak out a little bit.  Also,
-        make sure we tell the nearest node that *didn't* have
-        the value to store it.
-        """
-        valueCounts = Counter(values)
-        if len(valueCounts) != 1:
-            args = (self.node.long_id, str(values))
-            self.log.warning("Got multiple values for key %i: %s" % args)
-        value = valueCounts.most_common(1)[0][0]
-
-        peerToSaveTo = self.nearestWithoutValue.popleft()
-        if peerToSaveTo is not None:
-            d = self.protocol.callAnnouncePeer(peerToSaveTo, self.node.id, value)
-            return d.addCallback(lambda _: value)
-        return value
+            return foundValues
+        elif self.nearest.allBeenContacted():
+            return None  # not found!
+        else:
+            return self.find()
 
 
 class NodeSpiderCrawl(SpiderCrawl):
@@ -168,6 +152,9 @@ class RPCFindResponse(object):
 
     def getValues(self):
         return self.response[1]["values"]
+
+    def getToken(self):
+        return self.response[1]["token"]
 
     def getNodeList(self):
         """
