@@ -46,11 +46,12 @@ class KademliaProtocol(RPCProtocol):
                 # TODO: we must reply error message
                 log.msg("Received unknown message from %s, ignoring" % repr(address))
 
-                self.transport.write(bencode({"t": msgID, "y": "e", "e": [203, "Protocol Error, invalid arguments"]}))
+                self.transport.write(bencode({"t": msgID, "y": "e", "e": [203, "Protocol Error, invalid arguments"]}),
+                                     address)
         except BTFailure:
             log.msg("Not a valid bencoded string from %s, ignoring" % repr(address))
 
-            self.transport.write(bencode({"y": "e", "e": [203, "Protocol Error, malformed packet"]}))
+            self.transport.write(bencode({"y": "e", "e": [203, "Protocol Error, malformed packet"]}), address)
 
     def _sendResponse(self, response, msgID, address):
         if self.noisy:
