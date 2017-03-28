@@ -15,46 +15,35 @@ Assuming you want to connect to an existing network (run the standalone server e
 ```python
 from twisted.internet import reactor
 from twisted.python import log
-from kademlia.network import Server
+from network import Server
+from utils import from_hex_to_byte
 import sys
 
-# log to std out
 log.startLogging(sys.stdout)
 
-def quit(result):
-    print "Key result:", result
+
+def done(result):
+    print "Key result:"
+    print result
     reactor.stop()
 
-def get(result, server):
-    return server.get("a key").addCallback(quit)
 
-def done(found, server):
-    log.msg("Found nodes: %s" % found)
-    return server.set("a key", "a value").addCallback(get, server)
+def bootstrapDone(found, server, key):
+    if len(found) == 0:
+        print "Could not connect to the bootstrap server."
+        reactor.stop()
+    else:
+        print "Bootstrap completed"
 
-server = Server()
-# next line, or use reactor.listenUDP(5678, server.protocol)
-server.listen(5678)
-server.bootstrap([('127.0.0.1', 1234)]).addCallback(done, server)
+    server.get(key).addCallback(done)
+
+
+key = from_hex_to_byte('f7bf674bd41c5a7affc8a61479d8968063fc609d')
+
+server = Server(id=from_hex_to_byte('b481586aac12255d290fc575656dd31d67f765b8'))
+server.listen(12346)
+server.bootstrap([('67.215.246.10', 6881)]).addCallback(bootstrapDone, server, key)
 
 reactor.run()
-```
-
-Check out the examples folder for other examples.
-
-## Stand-alone Server
-If all you want to do is run a local server, just start the example server:
 
 ```
-twistd -noy examples/server.tac
-```
-
-## Running Tests
-To run tests:
-
-```
-trial kademlia
-```
-
-## Fidelity to Original Paper
-The current implementation should be an accurate implementation of all aspects of the paper save one - in Section 2.3 there is the requirement that the original publisher of a key/value republish it every 24 hours.  This library does not do this (though you can easily do this manually).
