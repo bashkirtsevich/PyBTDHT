@@ -60,9 +60,9 @@ def from_byte_to_hex(byte_string):
 
 
 def decode_nodes(message):
-    nodes = []
+    result = []
     if len(message) % 26 != 0:
-        return nodes
+        return result
 
     for i in range(0, len(message), 26):
         node_id = message[i: i + 20]
@@ -73,9 +73,9 @@ def decode_nodes(message):
         except:
             continue
 
-        nodes.append([node_id, ip, port])
+        result.append([node_id, ip, port])
 
-    return nodes
+    return result
 
 
 def decode_values(values):
@@ -84,16 +84,17 @@ def decode_values(values):
 
 
 def encode_nodes(nodes):
-    message = ""
+    result = ""
     for node in nodes:
         try:
             ip_message = socket.inet_aton(node.ip)
             port_message = struct.pack("!H", node.port)
         except:
             continue  # from IP address to network order
-        message = message + node.id + ip_message + port_message
+            
+        result = result + node.id + ip_message + port_message
 
-    return message
+    return result
 
 
 def deferred_dict(d):
