@@ -153,22 +153,17 @@ class Server(object):
         Set the given key to the given value in the network.
         """
         self.log.debug("setting '%s' = '%s' on network" % (key, value))
-        return self.digest_set(key, value)
 
-    def digest_set(self, dkey, value):
-        """
-        Set the given SHA1 digest key to the given value in the network.
-        """
-        node = Node(dkey)
+        node = Node(key)
         # this is useful for debugging messages
-        hkey = binascii.hexlify(dkey)
+        hkey = binascii.hexlify(key)
 
         def store(nodes):
             self.log.info("setting '%s' on %s" % (hkey, map(str, nodes)))
             # if this node is close too, then store here as well
             if self.node.distanceTo(node) < max([n.distanceTo(node) for n in nodes]):
-                self.storage[dkey] = value
-            ds = [self.protocol.callAnnouncePeer(n, dkey, value) for n in nodes]
+                self.storage[key] = value
+            ds = [self.protocol.callAnnouncePeer(n, key, value) for n in nodes]
             return defer.DeferredList(ds).addCallback(self._anyRespondSuccess)
 
         nearest = self.protocol.router.findNeighbors(node)
