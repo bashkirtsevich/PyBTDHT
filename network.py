@@ -36,7 +36,7 @@ class Server(object):
         self.ksize = ksize
         self.alpha = alpha
         self.log = Logger(system=self)
-        self.storage = storage or ForgetfulStorage()
+        self.storage = storage or ForgetfulStorage(ttl=30 * 60)
         self.node = Node(id or generate_node_id())
         self.protocol = KademliaProtocol(self.node, self.storage, ksize)
         self.refreshLoop = LoopingCall(self.refresh_table).start(3600)
