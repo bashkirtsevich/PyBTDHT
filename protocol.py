@@ -38,7 +38,9 @@ class KademliaProtocol(RPCProtocol):
             msgType = msg["y"]
 
             if msgType == "q":
-                if msg["q"] not in ["ping", "find_node", "get_peers", "announce_peer"]:
+                f = getattr(self, "rpc_%s" % msg["q"], None)
+
+                if f is None or not callable(f):
                     self.transport.write(bencode({
                         "t": msgID,
                         "y": "e",
