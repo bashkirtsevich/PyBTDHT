@@ -5,6 +5,8 @@ import hashlib
 import operator
 import socket
 import struct
+import math
+import datetime
 
 from twisted.internet import defer
 from uuid import uuid4
@@ -25,13 +27,28 @@ class OrderedSet(list):
         self.append(thing)
 
 
-def generate_node_id():
-    def sha1(s):
-        if not isinstance(s, str):
-            s = str(s)
-        return hashlib.sha1(s).digest()
+def sha1(s):
+    if not isinstance(s, str):
+        s = str(s)
+    return hashlib.sha1(s).digest()
 
+
+def ceil_dt(dt):
+    nsecs = dt.minute * 60 + dt.second + dt.microsecond * 1e-6
+    delta = math.ceil(nsecs / 900) * 900 - nsecs
+    return dt + datetime.timedelta(seconds=delta)
+
+
+def generate_node_id():
     return sha1(uuid4().bytes)
+
+
+def generate_token(ip, port):
+    return sha1("PyBTDHT salt" + str(ceil_dt(datetime.datetime.now())) + ip + str(port))
+
+
+def verify_token(ip, port, token):
+    return generate_token(ip, port) == token
 
 
 def from_hex_to_byte(hex_string):
@@ -91,7 +108,7 @@ def encode_nodes(nodes):
             port_message = struct.pack("!H", node.port)
         except:
             continue  # from IP address to network order
-            
+
         result = result + node.id + ip_message + port_message
 
     return result

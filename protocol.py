@@ -16,7 +16,7 @@ from struct import pack
 
 from bencode import bencode, bdecode, BTFailure
 
-from utils import encode_nodes
+from utils import encode_nodes, generate_token, verify_token
 
 
 class KademliaProtocol(RPCProtocol):
@@ -91,16 +91,18 @@ class KademliaProtocol(RPCProtocol):
 
         return {"y": "r", "r": {"id": self.sourceNode.id}}
 
-    def rpc_announce_peer(self, sender, nodeId, key, value):
+    def rpc_announce_peer(self, sender, nodeId, arguments):
         source = Node(nodeId, sender[0], sender[1])
 
         self.welcomeIfNewNode(source)
 
         self.log.debug("got a store request from %s, storing value" % str(sender))
 
-        self.storage[key] = value
-
-        return {"y": "r", "r": {"id": self.sourceNode.id}}
+        if verify_token(sender[0], sender[1], arguments["token"]):
+            self.storage[arguments["info_hash"]] = arguments["port"]
+            return {"y": "r", "r": {"id": self.sourceNode.id}}
+        else:
+            return {"y": "e", "e": [203, "Protocol Error, bad token"]}
 
     def rpc_find_node(self, sender, nodeId, key):
         self.log.info("finding neighbors of %i in local table" % long(nodeId.encode('hex'), 16))
@@ -113,17 +115,18 @@ class KademliaProtocol(RPCProtocol):
         return {"y": "r", "r": {"id": self.sourceNode.id,
                                 "nodes": encode_nodes(self.router.findNeighbors(node, exclude=source))}}
 
-    def rpc_get_peers(self, sender, nodeId, key):
+    def rpc_get_peers(self, sender, nodeId, info_hash):
         source = Node(nodeId, sender[0], sender[1])
 
         self.welcomeIfNewNode(source)
 
-        values = self.storage.get(key, None)
+        values = self.storage.get(info_hash, None)
         if values is not None:
             # We must calculate unique token for sender
-            return {"y": "r", "r": {"id": self.sourceNode.id, "token": "token", "values": values}}
+            return {"y": "r", "r": {"id": self.sourceNode.id, "token": generate_token(sender[0], sender[1]),
+                                    "values": values}}
         else:
-            return self.rpc_find_node(sender, nodeId, key)
+            return self.rpc_find_node(sender, nodeId, info_hash)
 
     def callFindNode(self, nodeToAsk, nodeToFind):
         address = (nodeToAsk.ip, nodeToAsk.port)
