@@ -114,7 +114,8 @@ class KademliaProtocol(RPCProtocol):
             ids.append(random.randint(*bucket.range))
         return ids
 
-    def _response_error(self, error_code, error_message):
+    @staticmethod
+    def _response_error(error_code, error_message):
         return {"y": "e",
                 "e": [error_code, error_message]}
 
