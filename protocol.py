@@ -38,22 +38,50 @@ class KademliaProtocol(RPCProtocol):
             msgType = msg["y"]
 
             if msgType == "q":
-                self._acceptRequest(msgID, [msg["q"], [msg["a"]]], address)
+                if msg["q"] not in ["ping", "find_node", "get_peers", "announce_peer"]:
+                    self.transport.write(bencode({
+                        "t": msgID,
+                        "y": "e",
+                        "e": [204, "Method Unknown"]}),
+                        address
+                    )
+                else:
+                    self._acceptRequest(msgID, [msg["q"], [msg["a"]]], address)
+
             elif msgType == "r":
                 self._acceptResponse(msgID, msg["r"], address)
+
+            elif msgType == "e":
+                # Ignore error messages
+                pass
             else:
                 # otherwise, don't know the format, don't do anything
-                # TODO: we must reply error message
                 log.msg("Received unknown message from %s, ignoring" % repr(address))
 
-                self.transport.write(bencode({"t": msgID, "y": "e",
-                                              "e": [203, "Protocol Error, invalid arguments"]}),
-                                     address)
+                self.transport.write(bencode({
+                    "t": msgID,
+                    "y": "e",
+                    "e": [203, "Protocol Error, invalid arguments"]}),
+                    address
+                )
+
+        except KeyError:
+            log.msg("Invalid message data from %s, ignoring" % repr(address))
+
+            self.transport.write(bencode({
+                "y": "e",
+                "e": [201, "Generic Error"]}),
+                address
+            )
+
         except BTFailure:
             log.msg("Not a valid bencoded string from %s, ignoring" % repr(address))
 
-            self.transport.write(bencode({"y": "e",
-                                          "e": [203, "Protocol Error, malformed packet"]}), address)
+            self.transport.write(bencode({
+                "y": "e",
+                "e": [203, "Protocol Error, malformed packet"]}),
+                address
+            )
 
     def _sendResponse(self, response, msgID, address):
         if self.noisy:
