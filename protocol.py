@@ -116,7 +116,7 @@ class KademliaProtocol(RPCProtocol):
             self.log.debug("got a store request from %s, storing value" % str(sender))
 
             if verify_token(sender[0], sender[1], token):
-                values = self.storage[info_hash] if info_hash in self.storage else []
+                values = self.storage.get(info_hash, [])
                 values.append((sender[0], port))
 
                 # Redeclare value by info_hash
