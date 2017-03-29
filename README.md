@@ -35,7 +35,7 @@ def bootstrapDone(found, server, key):
     else:
         print "Bootstrap completed"
 
-    server.get(key).addCallback(done)
+    server.get_peers(key).addCallback(done)
 
 
 key = from_hex_to_byte('f7bf674bd41c5a7affc8a61479d8968063fc609d')
