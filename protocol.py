@@ -16,7 +16,7 @@ from struct import pack
 
 from bencode import bencode, bdecode, BTFailure
 
-from utils import encode_nodes, generate_token, verify_token
+from utils import encode_nodes, generate_token, verify_token, encode_values
 
 
 class KademliaProtocol(RPCProtocol):
@@ -116,7 +116,12 @@ class KademliaProtocol(RPCProtocol):
             self.log.debug("got a store request from %s, storing value" % str(sender))
 
             if verify_token(sender[0], sender[1], token):
-                self.storage[info_hash] = port
+                values = self.storage[info_hash] if info_hash in self.storage else []
+                values.append((sender[0], port))
+
+                # Redeclare value by info_hash
+                self.storage[info_hash] = values
+
                 return {"y": "r",
                         "r": {"id": self.sourceNode.id}}
             else:
@@ -157,7 +162,7 @@ class KademliaProtocol(RPCProtocol):
                 return {"y": "r",
                         "r": {"id": self.sourceNode.id,
                               "token": generate_token(sender[0], sender[1]),
-                              "values": values}}
+                              "values": encode_values(values)}}
             else:
                 return self.rpc_find_node(sender, {"id": node_id,
                                                    "target": info_hash})

@@ -100,6 +100,10 @@ def decode_values(values):
                               struct.unpack("!H", value[4: 6])[0]), values)
 
 
+def encode_values(values):
+    return map(lambda value: socket.inet_aton(value[0] + struct.pack("!H", value[1])), values)
+
+
 def encode_nodes(nodes):
     result = ""
     for node in nodes:
