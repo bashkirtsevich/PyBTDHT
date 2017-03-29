@@ -159,7 +159,8 @@ class KademliaProtocol(RPCProtocol):
                               "token": generate_token(sender[0], sender[1]),
                               "values": values}}
             else:
-                return self.rpc_find_node(sender, args)
+                return self.rpc_find_node(sender, {"id": node_id,
+                                                   "target": info_hash})
         except KeyError:
             return self._response_error(203, "Protocol Error, invalid arguments")
 
