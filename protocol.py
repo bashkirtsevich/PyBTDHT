@@ -46,12 +46,14 @@ class KademliaProtocol(RPCProtocol):
                 # TODO: we must reply error message
                 log.msg("Received unknown message from %s, ignoring" % repr(address))
 
-                self.transport.write(bencode({"t": msgID, "y": "e", "e": [203, "Protocol Error, invalid arguments"]}),
+                self.transport.write(bencode({"t": msgID, "y": "e",
+                                              "e": [203, "Protocol Error, invalid arguments"]}),
                                      address)
         except BTFailure:
             log.msg("Not a valid bencoded string from %s, ignoring" % repr(address))
 
-            self.transport.write(bencode({"y": "e", "e": [203, "Protocol Error, malformed packet"]}), address)
+            self.transport.write(bencode({"y": "e",
+                                          "e": [203, "Protocol Error, malformed packet"]}), address)
 
     def _sendResponse(self, response, msgID, address):
         if self.noisy:
@@ -89,7 +91,8 @@ class KademliaProtocol(RPCProtocol):
 
         self.welcomeIfNewNode(source)
 
-        return {"y": "r", "r": {"id": self.sourceNode.id}}
+        return {"y": "r",
+                "r": {"id": self.sourceNode.id}}
 
     def rpc_announce_peer(self, sender, nodeId, arguments):
         source = Node(nodeId, sender[0], sender[1])
@@ -100,9 +103,11 @@ class KademliaProtocol(RPCProtocol):
 
         if verify_token(sender[0], sender[1], arguments["token"]):
             self.storage[arguments["info_hash"]] = arguments["port"]
-            return {"y": "r", "r": {"id": self.sourceNode.id}}
+            return {"y": "r",
+                    "r": {"id": self.sourceNode.id}}
         else:
-            return {"y": "e", "e": [203, "Protocol Error, bad token"]}
+            return {"y": "e",
+                    "e": [203, "Protocol Error, bad token"]}
 
     def rpc_find_node(self, sender, nodeId, key):
         self.log.info("finding neighbors of %i in local table" % long(nodeId.encode('hex'), 16))
@@ -112,8 +117,9 @@ class KademliaProtocol(RPCProtocol):
 
         node = Node(key)
 
-        return {"y": "r", "r": {"id": self.sourceNode.id,
-                                "nodes": encode_nodes(self.router.findNeighbors(node, exclude=source))}}
+        return {"y": "r",
+                "r": {"id": self.sourceNode.id,
+                      "nodes": encode_nodes(self.router.findNeighbors(node, exclude=source))}}
 
     def rpc_get_peers(self, sender, nodeId, info_hash):
         source = Node(nodeId, sender[0], sender[1])
@@ -123,8 +129,10 @@ class KademliaProtocol(RPCProtocol):
         values = self.storage.get(info_hash, None)
         if values is not None:
             # We must calculate unique token for sender
-            return {"y": "r", "r": {"id": self.sourceNode.id, "token": generate_token(sender[0], sender[1]),
-                                    "values": values}}
+            return {"y": "r",
+                    "r": {"id": self.sourceNode.id,
+                          "token": generate_token(sender[0], sender[1]),
+                          "values": values}}
         else:
             return self.rpc_find_node(sender, nodeId, info_hash)
 
@@ -150,17 +158,29 @@ class KademliaProtocol(RPCProtocol):
 
     # BitTorrent protocol messages implementation
     def ping(self, address, nodeId):
-        return self.sendMessage(address, {"y": "q", "q": "ping", "a": {"id": nodeId}})
+        return self.sendMessage(address, {"y": "q",
+                                          "q": "ping",
+                                          "a": {"id": nodeId}})
 
     def find_node(self, address, nodeId, targetId):
-        return self.sendMessage(address, {"y": "q", "q": "find_node", "a": {"id": nodeId, "target": targetId}})
+        return self.sendMessage(address, {"y": "q",
+                                          "q": "find_node",
+                                          "a": {"id": nodeId,
+                                                "target": targetId}})
 
     def get_peers(self, address, nodeId, info_hash):
-        return self.sendMessage(address, {"y": "q", "q": "get_peers", "a": {"id": nodeId, "info_hash": info_hash}})
+        return self.sendMessage(address, {"y": "q",
+                                          "q": "get_peers",
+                                          "a": {"id": nodeId,
+                                                "info_hash": info_hash}})
 
     def announce_peer(self, address, nodeId, info_hash, port, token):
-        return self.sendMessage(address, {"y": "q", "q": "announce_peer",
-                                          "a": {"id": nodeId, "implied_port": 0, "info_hash": info_hash, "port": port,
+        return self.sendMessage(address, {"y": "q",
+                                          "q": "announce_peer",
+                                          "a": {"id": nodeId,
+                                                "implied_port": 0,
+                                                "info_hash": info_hash,
+                                                "port": port,
                                                 "token": token}})
 
     def welcomeIfNewNode(self, node):
