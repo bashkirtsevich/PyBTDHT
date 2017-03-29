@@ -38,7 +38,7 @@ class KademliaProtocol(RPCProtocol):
             msgType = msg["y"]
 
             if msgType == "q":
-                self._acceptRequest(msgID, [msg["q"], msg["a"]], address)
+                self._acceptRequest(msgID, [msg["q"], [msg["a"]]], address)
             elif msgType == "r":
                 self._acceptResponse(msgID, msg["r"], address)
             else:
@@ -86,55 +86,82 @@ class KademliaProtocol(RPCProtocol):
             ids.append(random.randint(*bucket.range))
         return ids
 
-    def rpc_ping(self, sender, nodeId):
-        source = Node(nodeId, sender[0], sender[1])
+    def _response_error(self, error_code, error_message):
+        return {"y": "e",
+                "e": [error_code, error_message]}
 
-        self.welcomeIfNewNode(source)
+    def rpc_ping(self, sender, args):
+        try:
+            node_id = args["id"]
+            source = Node(node_id, sender[0], sender[1])
 
-        return {"y": "r",
-                "r": {"id": self.sourceNode.id}}
+            self.welcomeIfNewNode(source)
 
-    def rpc_announce_peer(self, sender, nodeId, arguments):
-        source = Node(nodeId, sender[0], sender[1])
-
-        self.welcomeIfNewNode(source)
-
-        self.log.debug("got a store request from %s, storing value" % str(sender))
-
-        if verify_token(sender[0], sender[1], arguments["token"]):
-            self.storage[arguments["info_hash"]] = arguments["port"]
             return {"y": "r",
                     "r": {"id": self.sourceNode.id}}
-        else:
-            return {"y": "e",
-                    "e": [203, "Protocol Error, bad token"]}
+        except KeyError:
+            return self._response_error(203, "Protocol Error, invalid arguments")
 
-    def rpc_find_node(self, sender, nodeId, key):
-        self.log.info("finding neighbors of %i in local table" % long(nodeId.encode('hex'), 16))
+    def rpc_announce_peer(self, sender, args):
+        try:
+            node_id = args["id"]
+            info_hash = args["info_hash"]
+            port = args["port"]
+            token = args["token"]
 
-        source = Node(nodeId, sender[0], sender[1])
-        self.welcomeIfNewNode(source)
+            source = Node(node_id, sender[0], sender[1])
 
-        node = Node(key)
+            self.welcomeIfNewNode(source)
 
-        return {"y": "r",
-                "r": {"id": self.sourceNode.id,
-                      "nodes": encode_nodes(self.router.findNeighbors(node, exclude=source))}}
+            self.log.debug("got a store request from %s, storing value" % str(sender))
 
-    def rpc_get_peers(self, sender, nodeId, info_hash):
-        source = Node(nodeId, sender[0], sender[1])
+            if verify_token(sender[0], sender[1], token):
+                self.storage[info_hash] = port
+                return {"y": "r",
+                        "r": {"id": self.sourceNode.id}}
+            else:
+                return self._response_error(203, "Protocol Error, bad token")
+        except KeyError:
+            return self._response_error(203, "Protocol Error, invalid arguments")
 
-        self.welcomeIfNewNode(source)
+    def rpc_find_node(self, sender, args):
+        try:
+            node_id = args["id"]
+            target = args["target"]
 
-        values = self.storage.get(info_hash, None)
-        if values is not None:
-            # We must calculate unique token for sender
+            self.log.info("finding neighbors of %i in local table" % long(node_id.encode('hex'), 16))
+
+            source = Node(node_id, sender[0], sender[1])
+            self.welcomeIfNewNode(source)
+
+            node = Node(target)
+
             return {"y": "r",
                     "r": {"id": self.sourceNode.id,
-                          "token": generate_token(sender[0], sender[1]),
-                          "values": values}}
-        else:
-            return self.rpc_find_node(sender, nodeId, info_hash)
+                          "nodes": encode_nodes(self.router.findNeighbors(node, exclude=source))}}
+        except KeyError:
+            return self._response_error(203, "Protocol Error, invalid arguments")
+
+    def rpc_get_peers(self, sender, args):
+        try:
+            node_id = args["id"]
+            info_hash = args["info_hash"]
+
+            source = Node(node_id, sender[0], sender[1])
+
+            self.welcomeIfNewNode(source)
+
+            values = self.storage.get(info_hash, None)
+            if values is not None:
+                # We must calculate unique token for sender
+                return {"y": "r",
+                        "r": {"id": self.sourceNode.id,
+                              "token": generate_token(sender[0], sender[1]),
+                              "values": values}}
+            else:
+                return self.rpc_find_node(sender, args)
+        except KeyError:
+            return self._response_error(203, "Protocol Error, invalid arguments")
 
     def callFindNode(self, nodeToAsk, nodeToFind):
         address = (nodeToAsk.ip, nodeToAsk.port)
