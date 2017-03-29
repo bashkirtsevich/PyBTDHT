@@ -130,7 +130,7 @@ class Server(object):
             ds.append(self.protocol.stun(neighbor))
         return defer.gatherResults(ds).addCallback(handle)
 
-    def get(self, key):
+    def get_peers(self, info_hash):
         """
         Get a key if the network has it.
 
@@ -138,32 +138,32 @@ class Server(object):
             :class:`None` if not found, the value otherwise.
         """
         # if this node has it, return it
-        if self.storage.get(key) is not None:
-            return defer.succeed(self.storage.get(key))
-        node = Node(key)
+        if self.storage.get(info_hash) is not None:
+            return defer.succeed(self.storage.get(info_hash))
+        node = Node(info_hash)
         nearest = self.protocol.router.findNeighbors(node)
         if len(nearest) == 0:
-            self.log.warning("There are no known neighbors to get key %s" % key)
+            self.log.warning("There are no known neighbors to get key %s" % info_hash)
             return defer.succeed(None)
         spider = ValueSpiderCrawl(self.protocol, node, nearest, self.ksize, self.alpha)
         return spider.find()
 
-    def set(self, key, value):
+    def announce_peer(self, info_hash, port):
         """
         Set the given key to the given value in the network.
         """
-        self.log.debug("setting '%s' = '%s' on network" % (key, value))
+        self.log.debug("setting '%s' = '%s' on network" % (info_hash, port))
 
-        node = Node(key)
+        node = Node(info_hash)
         # this is useful for debugging messages
-        hkey = binascii.hexlify(key)
+        hkey = binascii.hexlify(info_hash)
 
         def store(nodes):
             self.log.info("setting '%s' on %s" % (hkey, map(str, nodes)))
             # if this node is close too, then store here as well
             if self.node.distanceTo(node) < max([n.distanceTo(node) for n in nodes]):
-                self.storage[key] = value
-            ds = [self.protocol.callAnnouncePeer(n, key, value) for n in nodes]
+                self.storage[info_hash] = port
+            ds = [self.protocol.callAnnouncePeer(n, info_hash, port) for n in nodes]
             return defer.DeferredList(ds).addCallback(self._any_respond_success)
 
         nearest = self.protocol.router.findNeighbors(node)
