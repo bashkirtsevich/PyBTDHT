@@ -35,7 +35,7 @@ def sha1(s):
 
 def ceil_dt(dt):
     nsecs = dt.minute * 60 + dt.second + dt.microsecond * 1e-6
-    delta = math.ceil(nsecs / 900) * 900 - nsecs
+    delta = math.ceil(nsecs / 300) * 300 - nsecs
     return dt + datetime.timedelta(seconds=delta)
 
 
