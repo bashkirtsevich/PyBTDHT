@@ -247,33 +247,9 @@ class KademliaProtocol(RPCProtocol):
                                                 "port": port,
                                                 "token": token}})
 
-    # TODO: Can delete this method, he just reply local values to closest neighbors
     def welcomeIfNewNode(self, node):
-        """
-        Given a new node, send it all the keys/values it should be storing,
-        then add it to the routing table.
-
-        @param node: A new node that just joined (or that we just found out
-        about).
-
-        Process:
-        For each key in storage, get k closest nodes.  If newnode is closer
-        than the furtherst in that list, and the node for this server
-        is closer than the closest in that list, then store the key/value
-        on the new node (per section 2.5 of the paper)
-        """
         if self.router.isNewNode(node):
-            ds = []
-            for key, value in self.storage.iteritems():
-                keynode = Node(key)
-                neighbors = self.router.findNeighbors(keynode)
-                if len(neighbors) > 0:
-                    newNodeClose = node.distanceTo(keynode) < neighbors[-1].distanceTo(keynode)
-                    thisNodeClosest = self.sourceNode.distanceTo(keynode) < neighbors[0].distanceTo(keynode)
-                if len(neighbors) == 0 or (newNodeClose and thisNodeClosest):
-                    ds.append(self.callAnnouncePeer(node, key, value))
             self.router.addContact(node)
-            return defer.gatherResults(ds)
 
     def handleCallResponse(self, result, node, responseMessage):
         """
