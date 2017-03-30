@@ -285,4 +285,6 @@ class KademliaProtocol(RPCProtocol):
         else:
             self.log.debug("no response from %s, removing from router" % node)
             self.router.removeContact(node)
-        return result
+
+        # TODO: Its looks like a software crutch, need some solution to avoid it.
+        return result + (node,)

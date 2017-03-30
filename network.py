@@ -153,37 +153,48 @@ class Server(object):
         """
         self.log.debug("setting '%s' = '%s' on network" % (info_hash, port))
 
-        node = Node(info_hash)
+        key = Node(info_hash)
         # this is useful for debugging messages
         hkey = binascii.hexlify(info_hash)
+
+        def _any_announce_respond_success(responses):
+            for defer_success, result in responses:
+                peer_reached, peer_response = result
+                if defer_success and peer_reached and peer_response:
+                    return True
+
+            return False
+
+        def _any_get_peers_respond_success(responses):
+            ds = []
+
+            for defer_success, result in responses:
+                peer_reached, peer_response, node = result
+                if defer_success and peer_reached and "token" in peer_response:
+                    ds.append(self.protocol.callAnnouncePeer(node, key, port, peer_response["token"]))
+
+            if ds:
+                return defer.DeferredList(ds).addCallback(_any_announce_respond_success)
+            else:
+                return False
 
         def store(nodes):
             self.log.info("setting '%s' on %s" % (hkey, map(str, nodes)))
             # if this node is close too, then store here as well
-            if self.node.distanceTo(node) < max([n.distanceTo(node) for n in nodes]):
+            if self.node.distanceTo(key) < max([n.distanceTo(key) for n in nodes]):
                 self.storage[info_hash] = port
-            ds = [self.protocol.callAnnouncePeer(n, info_hash, port) for n in nodes]
-            return defer.DeferredList(ds).addCallback(self._any_respond_success)
 
-        nearest = self.protocol.router.findNeighbors(node)
+            ds = [self.protocol.callGetPeers(n, key) for n in nodes]
+            return defer.DeferredList(ds).addCallback(_any_get_peers_respond_success)
+
+        nearest = self.protocol.router.findNeighbors(key)
+
         if len(nearest) == 0:
             self.log.warning("There are no known neighbors to set key %s" % hkey)
             return defer.succeed(False)
-        spider = NodeSpiderCrawl(self.protocol, node, nearest, self.ksize, self.alpha)
+
+        spider = NodeSpiderCrawl(self.protocol, key, nearest, self.ksize, self.alpha)
         return spider.find().addCallback(store)
-
-    @staticmethod
-    def _any_respond_success(responses):
-        """
-        Given the result of a DeferredList of calls to peers, ensure that at least
-        one of them was contacted and responded with a Truthy result.
-        """
-        for defer_success, result in responses:
-            peer_reached, peer_response = result
-            if defer_success and peer_reached and peer_response:
-                return True
-
-        return False
 
     def save_state(self, fname):
         """
