@@ -159,7 +159,7 @@ class Server(object):
 
         def _any_announce_respond_success(responses):
             for defer_success, result in responses:
-                peer_reached, peer_response = result
+                peer_reached, peer_response, node = result
                 if defer_success and peer_reached and peer_response:
                     return True
 
