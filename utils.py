@@ -52,6 +52,7 @@ def verify_token(ip, port, token):
 
 
 def from_hex_to_byte(hex_string):
+    # TODO: Delete this and use "binascii.unhexlify()"
     byte_string = ""
 
     transfer = "0123456789abcdef"
@@ -66,6 +67,7 @@ def from_hex_to_byte(hex_string):
 
 
 def from_byte_to_hex(byte_string):
+    # TODO: Delete this and use "binascii.hexlify()"
     transfer = "0123456789abcdef"
 
     hex_string = ""
