@@ -1,8 +1,8 @@
 from twisted.internet import reactor
 from twisted.python import log
 from network import Server
-from utils import from_hex_to_byte
 import sys
+import binascii
 
 log.startLogging(sys.stdout)
 
@@ -19,13 +19,15 @@ def bootstrap_done(found, server, info_hash):
     else:
         print "Bootstrap completed"
 
+        # server.announce_peer(info_hash, 12357).addCallback(done)
         server.get_peers(info_hash).addCallback(done)
 
 
 def start_dht_server(ip):
-    info_hash = from_hex_to_byte('f7bf674bd41c5a7affc8a61479d8968063fc609d')
+    info_hash = binascii.unhexlify('59f115bc5e2e845326a0c871d33010ef6bc3349a')
+    # info_hash = binascii.unhexlify('971862a015ba2fdc834c0df70271983f8a4badb0')
 
-    server = Server(id=from_hex_to_byte('b481586aac12255d290fc575656dd31d67f765b8'))
+    server = Server(id=binascii.unhexlify('cd2e6673b9f2a21cad1e605fe5fb745b9f7a214d'))
     server.listen(12346)
     server.bootstrap([(ip, 6881)]).addCallback(bootstrap_done, server, info_hash)
 
