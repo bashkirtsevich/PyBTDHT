@@ -1,7 +1,6 @@
 """
 Package for interacting on the network at a high level.
 """
-import random
 import binascii
 import pickle
 
@@ -173,7 +172,8 @@ class Server(object):
         spider = NodeSpiderCrawl(self.protocol, node, nearest, self.ksize, self.alpha)
         return spider.find().addCallback(store)
 
-    def _any_respond_success(self, responses):
+    @staticmethod
+    def _any_respond_success(responses):
         """
         Given the result of a DeferredList of calls to peers, ensure that at least
         one of them was contacted and responded with a Truthy result.
@@ -200,8 +200,8 @@ class Server(object):
         with open(fname, 'w') as f:
             pickle.dump(data, f)
 
-    @classmethod
-    def load_state(cls, fname):
+    @staticmethod
+    def load_state(fname):
         """
         Load the state of this node (the alpha/ksize/id/immediate neighbors)
         from a cache file with the given fname.
