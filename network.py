@@ -178,7 +178,7 @@ class Server(object):
             else:
                 return False
 
-        def store(nodes):
+        def _store(nodes):
             self.log.info("setting '%s' on %s" % (hkey, map(str, nodes)))
             # if this node is close too, then store here as well
             if self.node.distanceTo(key) < max([n.distanceTo(key) for n in nodes]):
@@ -194,7 +194,7 @@ class Server(object):
             return defer.succeed(False)
 
         spider = NodeSpiderCrawl(self.protocol, key, nearest, self.ksize, self.alpha)
-        return spider.find().addCallback(store)
+        return spider.find().addCallback(_store)
 
     def save_state(self, fname):
         """
