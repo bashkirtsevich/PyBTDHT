@@ -217,7 +217,7 @@ class KademliaProtocol(RPCProtocol):
 
     def callAnnouncePeer(self, nodeToAsk, key, value, token):
         address = (nodeToAsk.ip, nodeToAsk.port)
-        d = self.announce_peer(address, self.sourceNode.id, key, value, token)
+        d = self.announce_peer(address, self.sourceNode.id, key.id, value, token)
         return d.addCallback(self.handleCallResponse, nodeToAsk, responseMessage="announce_peer")
 
     # BitTorrent protocol messages implementation
