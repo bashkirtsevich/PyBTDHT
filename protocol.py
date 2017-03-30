@@ -247,6 +247,7 @@ class KademliaProtocol(RPCProtocol):
                                                 "port": port,
                                                 "token": token}})
 
+    # TODO: Can delete this method, he just reply local values to closest neighbors
     def welcomeIfNewNode(self, node):
         """
         Given a new node, send it all the keys/values it should be storing,
