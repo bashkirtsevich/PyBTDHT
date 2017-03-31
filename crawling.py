@@ -96,7 +96,7 @@ class ValueSpiderCrawl(SpiderCrawl):
         self.nearest.remove(toremove)
 
         if len(foundValues) > 0:
-            return foundValues
+            return list(set(foundValues))  # return unique list of values
         elif self.nearest.allBeenContacted():
             return None  # not found!
         else:
