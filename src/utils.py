@@ -11,6 +11,8 @@ import datetime
 from twisted.internet import defer
 from uuid import uuid4
 
+token_salt = uuid4().bytes
+
 
 class OrderedSet(list):
     """
@@ -44,7 +46,7 @@ def generate_node_id():
 
 
 def generate_token(ip, port):
-    return sha1("PyBTDHT salt" + str(ceil_dt(datetime.datetime.now())) + ip + str(port))
+    return sha1(token_salt + str(ceil_dt(datetime.datetime.now())) + ip + str(port))
 
 
 def verify_token(ip, port, token):
