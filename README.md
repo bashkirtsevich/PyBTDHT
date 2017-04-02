@@ -6,18 +6,22 @@ This library is an asynchronous Python implementation of the [Kademlia distribut
 
 This library aims to be as close to a reference implementation of the [Kademlia paper](http://pdos.csail.mit.edu/~petar/papers/maymounkov-kademlia-lncs.pdf) as possible.
 
+This library modified to implements bittorrent [DHT protocol](http://www.bittorrent.org/beps/bep_0005.html).
+
 
 ## Usage
 *This assumes you have a working familiarity with [Twisted](https://twistedmatrix.com).*
 
-Assuming you want to connect to an existing network (run the standalone server example below if you don't have a network):
+### Getting peers example:
 
 ```python
+import binascii
+import sys
+
 from twisted.internet import reactor
 from twisted.python import log
-from network import Server
-import sys
-import binascii
+
+from src.network import Server
 
 log.startLogging(sys.stdout)
 
@@ -39,8 +43,8 @@ def bootstrap_done(found, server, info_hash):
 
 
 def start_dht_server(ip):
-    info_hash = binascii.unhexlify('59f115bc5e2e845326a0c871d33010ef6bc3349a')
-    # info_hash = binascii.unhexlify('971862a015ba2fdc834c0df70271983f8a4badb0')
+    # debian-live-8.7.1-amd64-standard.iso.torrent
+    info_hash = binascii.unhexlify('ac241759f92572e63de1ffdd1ea6baad8e5b236f')
 
     server = Server(id=binascii.unhexlify('cd2e6673b9f2a21cad1e605fe5fb745b9f7a214d'))
     server.listen(12346)
@@ -49,4 +53,5 @@ def start_dht_server(ip):
 
 reactor.resolve('router.bittorrent.com').addCallback(start_dht_server)
 reactor.run()
+
 ```

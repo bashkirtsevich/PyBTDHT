@@ -26,8 +26,8 @@ def bootstrap_done(found, server, info_hash):
 
 
 def start_dht_server(ip):
-    # info_hash = binascii.unhexlify('59f115bc5e2e845326a0c871d33010ef6bc3349a')
-    info_hash = binascii.unhexlify('971862a015ba2fdc834c0df70271983f8a4badb0')
+    # debian-live-8.7.1-amd64-standard.iso.torrent
+    info_hash = binascii.unhexlify('ac241759f92572e63de1ffdd1ea6baad8e5b236f')
 
     server = Server(id=binascii.unhexlify('cd2e6673b9f2a21cad1e605fe5fb745b9f7a214d'))
     server.listen(12346)
